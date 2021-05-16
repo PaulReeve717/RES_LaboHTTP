@@ -1,0 +1,23 @@
+version: '3.3'
+
+services:
+  reverse-proxy:
+    image: 'res/apache-rp'
+    build:
+      context: './images/reverse-proxy'
+      dockerfile: ./Dockerfile
+    depends_on:
+      - static
+      - dynamic
+    ports:
+      - "80:80"
+  static:
+    image: 'res/apache_php'
+    build:
+      context: './images/static-php'
+      dockerfile: ./Dockerfile
+  dynamic:
+    image: 'res/express'
+    build:
+      context: './images/dynamic-express'
+      dockerfile: ./Dockerfile
