@@ -15,7 +15,6 @@ In this dockerfile we use a php image with apache
 ```bash
 docker build -t res/apache_php .
 docker run -p 9090:80 res/apache_php
-docker exec -it <container_name> /bin/bash
 ```
 
 ## List of commands to show the default apache config
