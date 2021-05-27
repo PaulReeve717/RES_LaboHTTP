@@ -20,3 +20,7 @@ See documentation [here](./Step4/README.md)
 # Step 5 - Dynamic reverse proxy configuration
 
 See documentation [here](./Step5/README.md)
+
+# Additional Steps
+## Load balancing: multiple server nodes
+See documentation [here](./AdditionalSteps/LoadBalancing/README.md)

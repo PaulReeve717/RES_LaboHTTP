@@ -1,0 +1,40 @@
+version: '3.3'
+
+services:
+  reverse-proxy-balancer:
+    image: 'res/apache-rp-balancer'
+    build:
+      context: 'images/reverse-proxy'
+      dockerfile: images/reverse-proxy/Dockerfile
+    ports:
+      - "80:80"
+  static1:
+    image: 'res/apache_php'
+    build:
+      context: 'images/static-php'
+      dockerfile: images/static-php/Dockerfile
+  static2:
+    image: 'res/apache_php'
+    build:
+      context: 'images/static-php'
+      dockerfile: images/static-php/Dockerfile
+  static3:
+    image: 'res/apache_php'
+    build:
+      context: 'images/static-php'
+      dockerfile: images/static-php/Dockerfile
+  dynamic1:
+    image: 'res/express'
+    build:
+      context: 'images/dynamic-express'
+      dockerfile: images/dynamic-express/Dockerfile
+  dynamic2:
+    image: 'res/express'
+    build:
+      context: 'images/dynamic-express'
+      dockerfile: images/dynamic-express/Dockerfile
+  dynamic3:
+    image: 'res/express'
+    build:
+      context: 'images/dynamic-express'
+      dockerfile: images/dynamic-express/Dockerfile
