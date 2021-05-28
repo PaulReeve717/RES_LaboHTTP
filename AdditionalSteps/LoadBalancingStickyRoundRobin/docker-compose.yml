@@ -1,8 +1,8 @@
 version: '3.3'
 
 services:
-  reverse-proxy-balancer:
-    image: 'res/apache-rp-balancer'
+  reverse-proxy-balancer-sticky-rr:
+    image: 'res/apache-rp-balancer-sticky-rr'
     build:
       context: 'images/reverse-proxy'
       dockerfile: ./Dockerfile
