@@ -13,15 +13,18 @@ services:
       - "8080:8080"
     volumes:
       # So that Traefik can listen to the Docker events
-      - /var/run/docker.sock:/var/run/docker.sock
-  static1:
+      - //var/run/docker.sock:/var/run/docker.sock
+  static:
     image: 'res/apache_php'
-    build:
-      context: 'images/static-php'
-      dockerfile: ./Dockerfile
-
-  dynamic1:
+    scale: 2
+    labels:
+      - traefik.http.routers.static.rule=Host(`demo.res.ch`) && PathPrefix(`/`)
+      - traefik.http.services.static.loadBalancer.sticky.cookie=true
+      - traefik.http.services.static.loadBalancer.sticky.cookie.name=static_cookie
+  dynamic:
     image: 'res/express'
-    build:
-      context: 'images/dynamic-express'
-      dockerfile: ./Dockerfile
+    scale: 2
+    labels:
+      - traefik.http.routers.dynamic.rule=Host(`demo.res.ch`) && PathPrefix(`/api/jokes/`)
+      - traefik.http.middlewares.dynamic.stripprefix.prefixes=/api/jokes/
+      - traefik.http.routers.dynamic.middlewares=dynamic@docker
