@@ -1,4 +1,4 @@
-# Additional steps: Load balancing: multiple server nodes
+# Additional steps: Load balancing: round robin & sticky sessions
 
 ## Configure load balancer
 We start with the standard load balancer in the previous step [here](../LoadBalancing/README.md) 

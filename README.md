@@ -24,3 +24,6 @@ See documentation [here](./Step5/README.md)
 # Additional Steps
 ## Load balancing: multiple server nodes
 See documentation [here](./AdditionalSteps/LoadBalancing/README.md)
+
+## Load balancing: round robin & sticky sessions
+See documentation [here](./AdditionalSteps/LoadBalancingStickyRoundRobin/README.md)
