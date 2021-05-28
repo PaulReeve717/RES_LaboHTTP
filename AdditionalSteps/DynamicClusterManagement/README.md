@@ -1,40 +1,53 @@
-# Additional steps: Load balancing: round robin & sticky sessions
+# Additional steps: Load balancing: Dynamic cluster management
 
-## Configure load balancer
-We start with the standard load balancer in the previous step [here](../LoadBalancing/README.md) 
-and we edit the apache config to add __Sticky Session__ to the __static servers__.
+## Configure cluster
+For the reverse proxy in this step we used traefik instead of apache. We write all needed traefik config
+in the docker compose in the labels section of each service. 
+We also add a scale option for the static and dynamic server. 
+This option will allow us to create as many containers as the value of this option when we do a ```docker compose up```.
 
-So we change the reverse proxy configuration.
-Here's the configuration file for the reverse proxy virtual host:
-```apacheconf
-<VirtualHost *:80>
-    ServerName demo.res.ch
+```yaml
+version: '3.3'
 
-    Header add Balancer-Route "%{BALANCER_WORKER_ROUTE}e"
-    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
-    <Proxy "balancer://dynamic">
-        BalancerMember "http://dynamic1:3000" route=dynamic1
-        BalancerMember "http://dynamic2:3000" route=dynamic2
-        BalancerMember "http://dynamic3:3000" route=dynamic3
-    </Proxy>
-    ProxyPass "/api/jokes/" "balancer://dynamic/"
-    ProxyPassReverse "/api/jokes/" "balancer://dynamic/"
-
-    <Proxy "balancer://static">
-        BalancerMember "http://static1:80" route=static1
-        BalancerMember "http://static2:80" route=static2
-        BalancerMember "http://static3:80" route=static3
-        ProxySet stickysession=ROUTEID
-    </Proxy>
-    #use sticky session only for static
-    ProxyPass "/" "balancer://static/" stickysession=ROUTEID|jsessionid scolonpathdelim=On 
-    ProxyPassReverse "/" "balancer://static/"
-
-</VirtualHost>
+services:
+  traefik-proxy:
+    # The official v2 Traefik docker image
+    image: traefik:v2.4
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - //var/run/docker.sock:/var/run/docker.sock
+  static:
+    image: 'res/apache_php'
+    scale: 2 # 2 containers of the static server will be created
+    labels:
+      # set the redirection
+      - traefik.http.routers.static.rule=Host(`demo.res.ch`) && PathPrefix(`/`)
+      # allow sticky session in a cooke named static_cookie
+      - traefik.http.services.static.loadBalancer.sticky.cookie=true
+      - traefik.http.services.static.loadBalancer.sticky.cookie.name=static_cookie
+  dynamic:
+    image: 'res/express'
+    scale: 2 # 2 containers of the dynamic server will be created
+    labels:
+      # set the redirection
+      - traefik.http.routers.dynamic.rule=Host(`demo.res.ch`) && PathPrefix(`/api/jokes/`)
+      # correct the prefix because the dynamic server only accept request on '/'
+      - traefik.http.middlewares.dynamic.stripprefix.prefixes=/api/jokes/
+      - traefik.http.routers.dynamic.middlewares=dynamic@docker
 ```
-### For sticky session:
-We added a cookie header named ROUTEID that will be set to one of the three static servers on the first client request
-then every next request from this client will be sent to the server indicated in the cookie.
+
+### Launch dynamic containers in bash
+```bash
+cd servers
+docker compose -p servers1 up -d --scale static=4 --scale dynamic=3
+```
 
 #### Tests
 We test multiple scenarios
