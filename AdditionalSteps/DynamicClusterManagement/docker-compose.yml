@@ -2,6 +2,7 @@ version: '3.3'
 
 services:
   traefik-proxy:
+    container_name: global_traefik
     # The official v2 Traefik docker image
     image: traefik:v2.4
     # Enables the web UI and tells Traefik to listen to docker
