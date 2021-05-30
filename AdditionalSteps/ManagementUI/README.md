@@ -50,4 +50,5 @@ In the backend there is an api:
 - autodiscovery the traefik containers with labels because if we quit the application all containers profiles are lost.
 - CSS (because we're not in the 90's anymore)
 
-
+## Issues that we know
+The servers that we create don't have the same network than the traefik container. We tried to change the network with dockerode but we didn't success...
