@@ -78,7 +78,7 @@ networks:
     name: gateway
 ```
 
-Original [here](./images/reverse-proxy/servers/docker-compose.yml).
+Original [here](./servers/docker-compose.yml).
 
 ### Launch dynamic containers in bash
 To launch the traefik container you just need to do a ```docker compose up```
