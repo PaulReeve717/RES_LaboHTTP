@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<form>
+    <label>
+        Image:
+        <input type="text" name="image" placeholder="image">
+    </label>
+    <br>
+    <label>
+        Label:
+        <input type="text" name="label" placeholder="label">
+    </label>
+    <br>
+    <label>
+        Rule:
+        <input type="text" name="rule" placeholder="rule">
+    </label>
+    <br>
+    <label>
+        Prefix:
+        <input type="text" name="prefix" placeholder="prefix">
+    </label>
+    <br>
+    <label>
+        Port:
+        <input type="text" name="port" placeholder="port">
+    </label>
+    <br>
+    <label>
+        Sticky Balancing:
+        <input type="checkbox" name="sticky">
+    </label>
+    <br><br>
+    <input type="submit" value="Submit">
+</form>
+<ul class="containers">
+</ul>
+<script defer>
+    async function add(id){
+        await axios.get(`/containers/${id}/add`);
+        await loadContainers();
+    }
+    async function remove(id){
+        await axios.get(`/containers/${id}/remove`);
+        await loadContainers();
+    }
+
+    async function loadContainers() {
+        const containers = await fetch("/containers").then(res => res.json());
+        document.body.querySelector(".containers").innerHTML = '';
+        containers.forEach((c) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+            <span class="image">${c.image}</span>
+            <span class="label">${c.label}</span>
+            <span class="active">${c.active}</span>
+            <button class="start" onclick="add(${c.id})">add</button>
+            <button class="start" onclick="remove(${c.id})">remove</button>
+            `
+            document.body.querySelector(".containers").appendChild(li);
+        })
+    }
+
+    loadContainers();
+
+    document.forms[0].onsubmit = async (event) => {
+        event.preventDefault();
+        const form = new FormData(event.target);
+        const params = Object.fromEntries(form.entries());
+        const response = await axios.post("/containers",params);
+        loadContainers();
+    }
+</script>
+</body>
+</html>
