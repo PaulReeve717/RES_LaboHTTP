@@ -30,3 +30,6 @@ See documentation [here](./AdditionalSteps/LoadBalancingStickyRoundRobin/README.
 
 ## Load balancing: dynamic cluster management
 See documentation [here](./AdditionalSteps/DynamicClusterManagement/README.md)
+
+## Load balancing: management UI
+See documentation [here](./AdditionalSteps/ManagementUI/README.md)
