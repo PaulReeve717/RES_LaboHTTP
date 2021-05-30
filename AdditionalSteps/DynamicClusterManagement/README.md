@@ -1,16 +1,21 @@
 # Additional steps: Load balancing: Dynamic cluster management
 
 ## Configure cluster
-For the reverse proxy in this step we used traefik instead of apache. We write all needed traefik config
-in the docker compose in the labels section of each service. 
-We also add a scale option for the static and dynamic server. 
-This option will allow us to create as many containers as the value of this option when we do a ```docker compose up```.
 
-```yaml
+We did two docker compose for this step. One for the traefik reverse proxy and one for the static and dynamic servers.
+What needed to be in common with these two files was that all the servers and the reverse proxy use the same network 
+so they can easily communicate between them.
+
+### Reverse Proxy
+For the reverse proxy in this step we used traefik instead of apache.
+
+Here's the docker compose for it :
+```yarn
 version: '3.3'
 
 services:
   traefik-proxy:
+    container_name: global_traefik
     # The official v2 Traefik docker image
     image: traefik:v2.4
     # Enables the web UI and tells Traefik to listen to docker
@@ -23,59 +28,75 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - //var/run/docker.sock:/var/run/docker.sock
-  static:
-    image: 'res/apache_php'
-    scale: 2 # 2 containers of the static server will be created
-    labels:
-      # set the redirection
-      - traefik.http.routers.static.rule=Host(`demo.res.ch`) && PathPrefix(`/`)
-      # allow sticky session in a cooke named static_cookie
-      - traefik.http.services.static.loadBalancer.sticky.cookie=true
-      - traefik.http.services.static.loadBalancer.sticky.cookie.name=static_cookie
-  dynamic:
-    image: 'res/express'
-    scale: 2 # 2 containers of the dynamic server will be created
-    labels:
-      # set the redirection
-      - traefik.http.routers.dynamic.rule=Host(`demo.res.ch`) && PathPrefix(`/api/jokes/`)
-      # correct the prefix because the dynamic server only accept request on '/'
-      - traefik.http.middlewares.dynamic.stripprefix.prefixes=/api/jokes/
-      - traefik.http.routers.dynamic.middlewares=dynamic@docker
+
+    networks:
+      # Attach the traefik container to the default network (which is the global "gateway" network)
+      - default
+
+# Make the externally created network "gateway" available as network "default"
+networks:
+  default:
+      name: gateway
 ```
 
+Original [here](docker-compose.yml).
+
+This docker compose is heavily inspired from the one in the [traefik Quick start page](https://doc.traefik.io/traefik/getting-started/quick-start/)
+### Servers
+We write all needed traefik config in the labels section of each service (the static and dynamic server)
+
+Here's the docker compose for it :
+```yaml
+version: '3.3'
+
+services:
+  static:
+    image: 'res/apache_php'
+    labels:
+      - traefik.http.services.static.loadbalancer.server.port=80
+      # Do the correct redirection
+      - traefik.http.routers.static.rule=Host(`demo.res.ch`) && PathPrefix(`/`) 
+      # Sticky session with a cookie
+      - traefik.http.services.static.loadBalancer.sticky.cookie=true
+      - traefik.http.services.static.loadBalancer.sticky.cookie.name=static_cookie 
+    networks:
+      - default
+  dynamic:
+    image: 'res/express'
+    labels:
+      - traefik.http.services.dynamic.loadbalancer.server.port=3000
+      # Do the correct redirection
+      - traefik.http.routers.dynamic.rule=Host(`demo.res.ch`) && PathPrefix(`/api/jokes/`)
+      # Strip the prefix because our server only accept request on '/' 
+      - traefik.http.middlewares.dynamic.stripprefix.prefixes=/api/jokes/
+      - traefik.http.routers.dynamic.middlewares=dynamic@docker
+    networks:
+      - default
+
+networks:
+  default:
+    name: gateway
+```
+
+Original [here](./images/reverse-proxy/servers/docker-compose.yml).
+
 ### Launch dynamic containers in bash
+To launch the traefik container you just need to do a ```docker compose up```
+in the folder that contains the docker compose for the traefik server.
+
+For the servers you can launch the following command in the folder 
+that contains the docker compose for the static and dynamic server:
+
 ```bash
-cd servers
 docker compose -p servers1 up -d --scale static=4 --scale dynamic=3
 ```
 
-#### Tests
-We test multiple scenarios
-- __Check our config in real condition__
-  
-  To check our config we launch several Browser Session to verify that the assets are correctly downloaded from the same
-  server tagged in the cookie.
-
-- __Some static servers are down__
-  
-  We try to stop some static server during the runtime to check what happens. So we control then Apache detects 
-  that the downed servers are correctly detected and then Apache set another Sticky Session value with a valid server.
-### For Round Robin:
-We didn't add any configuration for __Round Robin__ to apply in the dynamic servers because that's the default algorithm that 
-apache use.
+This command example will create a new docker compose cluster named ```servers1``` which will contain thanks to the ```--scale```
+option 4 static servers container and 3 dynamic server container.
 
 #### Tests
-We test one scenario
-
-- __One client doing the dynamic server servers__
-    We saw that each response from dynamic servers came from a different server in an ordered and cyclic way
-  (dynamic1 &rarr; dynamic2 &rarr; dynamic 3 &rarr; dynamic1 &rarr; ...). 
-  We didn't do the test with multiple clients because it's easier to see the Round Robin with one client.
-
-  
-### Remarks
-With our configuration the cookie is always send even in a request for the dynamic server that doesn't use it. 
-We are sure than we can set the cookie only for some route, but we should have to dive in Apache's documentation.
+We test all of it by first create our traefik container then multiple cluster of static and dynamic servers containers.
+We then shutdown some static and dynamic servers and see the traefik container adapt to it by changing its loadbalancing config.
 
 
 

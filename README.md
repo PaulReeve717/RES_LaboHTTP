@@ -27,3 +27,6 @@ See documentation [here](./AdditionalSteps/LoadBalancing/README.md)
 
 ## Load balancing: round robin & sticky sessions
 See documentation [here](./AdditionalSteps/LoadBalancingStickyRoundRobin/README.md)
+
+## Load balancing: dynamic cluster management
+See documentation [here](./AdditionalSteps/DynamicClusterManagement/README.md)
