@@ -1,0 +1,26 @@
+version: '3.3'
+
+services:
+  traefik-proxy:
+    container_name: global_traefik
+    # The official v2 Traefik docker image
+    image: traefik:v2.4
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - //var/run/docker.sock:/var/run/docker.sock
+
+    networks:
+      # Attach the traefik container to the default network (which is the global "gateway" network)
+      - default
+
+# Make the externally created network "gateway" available as network "default"
+networks:
+  default:
+      name: gateway

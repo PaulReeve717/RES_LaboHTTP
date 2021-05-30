@@ -1,0 +1,25 @@
+version: '3.3'
+
+services:
+  static:
+    image: 'res/apache_php'
+    labels:
+      - traefik.http.services.static.loadbalancer.server.port=80
+      - traefik.http.routers.static.rule=Host(`demo.res.ch`) && PathPrefix(`/`)
+      - traefik.http.services.static.loadBalancer.sticky.cookie=true
+      - traefik.http.services.static.loadBalancer.sticky.cookie.name=static_cookie
+    networks:
+      - default
+  dynamic:
+    image: 'res/express'
+    labels:
+      - traefik.http.services.dynamic.loadbalancer.server.port=3000
+      - traefik.http.routers.dynamic.rule=Host(`demo.res.ch`) && PathPrefix(`/api/jokes/`)
+      - traefik.http.middlewares.dynamic.stripprefix.prefixes=/api/jokes/
+      - traefik.http.routers.dynamic.middlewares=dynamic@docker
+    networks:
+      - default
+
+networks:
+  default:
+      name: gateway
